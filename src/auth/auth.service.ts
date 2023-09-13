@@ -1,7 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User as UserModel } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
+import { saltOrRounds } from './constans';
+import { SignInDto } from './schemas/sign-in.dto';
+import { SignUpDto } from './schemas/sign-up.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,11 +13,17 @@ export class AuthService {
 		private jwtService: JwtService,
 	) {}
 
-	async signIn(email: string, pass: string) {
-		const user = await this.usersService.getOne(email);
+	async signIn(dto: SignInDto) {
+		const user = await this.usersService.getOne(dto.email);
 
-		if (!user || user.password !== pass) {
-			throw new UnauthorizedException();
+		if (!user) {
+			throw new UnauthorizedException('Invalid email');
+		}
+
+		const isMatch = await bcrypt.compare(dto.password, user?.password);
+
+		if (!isMatch) {
+			throw new UnauthorizedException('Invalid password');
 		}
 
 		const payload = { sub: user.id, username: user.name };
@@ -24,7 +33,9 @@ export class AuthService {
 		};
 	}
 
-	async signUp(user: Omit<UserModel, 'id'>) {
-		return this.usersService.createUser(user);
+	async signUp(user: SignUpDto) {
+		const hashed = await bcrypt.hash(user.password, saltOrRounds);
+		const { password, ...newUser } = await this.usersService.createUser({ ...user, password: hashed });
+		return newUser;
 	}
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -12,7 +12,15 @@ export class UserService {
 		});
 	}
 
-	async createUser(data: Prisma.UserCreateInput): Promise<User> {
+	async createUser(data: Prisma.UserCreateInput) {
+		const finded = await this.getOne(data.email);
+
+		if (finded) {
+			throw new BadRequestException(
+				'There is a unique constraint violation, a new user cannot be created with this email',
+			);
+		}
+
 		return this.prisma.user.create({
 			data,
 		});
