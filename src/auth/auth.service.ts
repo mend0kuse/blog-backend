@@ -33,11 +33,13 @@ export class AuthService {
 
 	async signUp(user: SignUpDto) {
 		const hashed = await bcrypt.hash(user.password, saltOrRounds);
-		const { password, ...newUser } = await this.usersService.createUser({
+
+		const newUser = await this.usersService.createUser({
 			...user,
 			role: 'user',
 			password: hashed,
 		});
+
 		return newUser;
 	}
 }
