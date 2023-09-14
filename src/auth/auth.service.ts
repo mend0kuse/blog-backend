@@ -26,16 +26,18 @@ export class AuthService {
 			throw new UnauthorizedException('Invalid password');
 		}
 
-		const payload = { sub: user.id, username: user.name };
-
 		return {
-			access_token: await this.jwtService.signAsync(payload),
+			access_token: await this.jwtService.signAsync(user),
 		};
 	}
 
 	async signUp(user: SignUpDto) {
 		const hashed = await bcrypt.hash(user.password, saltOrRounds);
-		const { password, ...newUser } = await this.usersService.createUser({ ...user, password: hashed });
+		const { password, ...newUser } = await this.usersService.createUser({
+			...user,
+			role: 'user',
+			password: hashed,
+		});
 		return newUser;
 	}
 }
