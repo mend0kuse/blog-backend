@@ -10,6 +10,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// USER
+
 model User {
   id       Int      @id @default(autoincrement())
   email    String   @unique
@@ -30,4 +32,67 @@ model Profile {
   avatar   String?
   currency String?
   country  String?
+}
+
+// ARTICLE
+
+model ArticleType {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  articleId Int?
+  Article   Article? @relation(fields: [articleId], references: [id])
+}
+
+model Article {
+  id       Int    @id @default(autoincrement())
+  title    String
+  suptitle String
+  preview  String
+  views    Int
+
+  createdAt DateTime @default(now())
+
+  types ArticleType[]
+
+  textBlocks  ArticleBlockText[]
+  codeBlocks  ArticleBlockCode[]
+  imageBlocks ArticleBlockImage[]
+}
+
+model ArticleBlockCode {
+  id    Int    @id @default(autoincrement())
+  code  String
+  order Int
+
+  articleId Int?
+  Article   Article? @relation(fields: [articleId], references: [id])
+}
+
+model ArticleBlockImage {
+  id    Int    @id @default(autoincrement())
+  src   String
+  title String
+  order Int
+
+  articleId Int?
+  Article   Article? @relation(fields: [articleId], references: [id])
+}
+
+model ArticleBlockText {
+  id         Int             @id @default(autoincrement())
+  title      String
+  order      Int
+  paragraphs TextParagraph[]
+
+  articleId Int?
+  Article   Article? @relation(fields: [articleId], references: [id])
+}
+
+model TextParagraph {
+  id   Int    @id @default(autoincrement())
+  text String @db.LongText
+
+  articleBlockTextId Int?
+  ArticleBlockText   ArticleBlockText? @relation(fields: [articleBlockTextId], references: [id])
 }
