@@ -1,13 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TArticleDto } from './schemas/article';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArticlesService {
 	constructor(private prismaService: PrismaService) {}
 
-	getAll(): string {
-		return 'All articles';
+	private articlesInclude = {
+		types: true,
+		codeBlocks: true,
+		imageBlocks: true,
+		textBlocks: {
+			include: {
+				paragraphs: true,
+			},
+		},
+	};
+
+	getAll(args?: Prisma.ArticleFindManyArgs) {
+		return this.prismaService.article.findMany({ ...args, include: this.articlesInclude });
 	}
 
 	createOne(article: TArticleDto) {
@@ -34,16 +46,7 @@ export class ArticlesService {
 					})),
 				},
 			},
-			include: {
-				codeBlocks: true,
-				imageBlocks: true,
-				textBlocks: {
-					include: {
-						paragraphs: true,
-					},
-				},
-				types: true,
-			},
+			include: this.articlesInclude,
 		});
 	}
 }

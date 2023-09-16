@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-enum ArticleTypes {
+export enum ArticleTypes {
 	IT = 'IT',
 	Science = 'Science',
 	Ecology = 'Ecology',
