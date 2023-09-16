@@ -62,7 +62,7 @@ model Article {
 
 model ArticleBlockCode {
   id    Int    @id @default(autoincrement())
-  code  String
+  code  String @db.LongText
   order Int
 
   articleId Int?

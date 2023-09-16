@@ -27,11 +27,33 @@ export const articleDto = z.object({
 	title: z.string(),
 	suptitle: z.string(),
 	preview: z.string(),
-	types: z.array(z.object({ name: z.nativeEnum(ArticleTypes) })),
-
-	textBlocks: z.array(articleTextBlock).optional(),
-	codeBlocks: z.array(articleCodeBlock).optional(),
-	imageBlocks: z.array(articleImageBlock).optional(),
 });
 
+export const articleTypesDto = z.object({
+	name: z.nativeEnum(ArticleTypes),
+});
+
+export const articleDtoCreate = articleDto
+	.extend({
+		types: z.array(articleTypesDto),
+
+		textBlocks: z.array(articleTextBlock).optional(),
+		codeBlocks: z.array(articleCodeBlock).optional(),
+		imageBlocks: z.array(articleImageBlock).optional(),
+	})
+	.strict();
+
+export const articleDtoUpdate = articleDto
+	.partial()
+	.extend({
+		types: z.array(articleTypesDto.extend({ id: z.number() })).optional(),
+
+		textBlocks: z.array(articleTextBlock.extend({ id: z.number() })).optional(),
+		codeBlocks: z.array(articleCodeBlock.extend({ id: z.number() })).optional(),
+		imageBlocks: z.array(articleImageBlock.extend({ id: z.number() })).optional(),
+	})
+	.strict();
+
 export type TArticleDto = z.infer<typeof articleDto>;
+export type TArticleDtoCreate = z.infer<typeof articleDtoCreate>;
+export type TArticleDtoUpdate = z.infer<typeof articleDtoUpdate>;
