@@ -13,7 +13,15 @@ export class ArticlesService {
 		types: true,
 		codeBlocks: true,
 		imageBlocks: true,
-		stats: true,
+		ArticleStats: true,
+		User: {
+			select: {
+				id: true,
+				role: true,
+				email: true,
+				profile: true,
+			},
+		},
 		textBlocks: {
 			include: {
 				paragraphs: true,
@@ -25,7 +33,7 @@ export class ArticlesService {
 		const founded = await this.getOne(id);
 
 		if (founded) {
-			const updated = await this.update({ id, dto: { likes: (founded.stats?.likes ?? 0) + 1 } });
+			const updated = await this.update({ id, dto: { likes: (founded.ArticleStats?.likes ?? 0) + 1 } });
 
 			return updated;
 		}
@@ -35,7 +43,7 @@ export class ArticlesService {
 		const founded = await this.getOne(id);
 
 		if (founded) {
-			const updated = await this.update({ id, dto: { dislikes: (founded.stats?.dislikes ?? 0) + 1 } });
+			const updated = await this.update({ id, dto: { dislikes: (founded.ArticleStats?.dislikes ?? 0) + 1 } });
 
 			return updated;
 		}
@@ -70,7 +78,7 @@ export class ArticlesService {
 				data: {
 					...data,
 
-					stats: {
+					ArticleStats: {
 						update: {
 							...(likes && {
 								likes: likes,
@@ -116,14 +124,32 @@ export class ArticlesService {
 	}
 
 	async deleteOne(id: number) {
+		const deleteCode = this.prismaService.articleBlockCode.deleteMany({ where: { articleId: id } });
+		const deleteText = this.prismaService.articleBlockText.deleteMany({ where: { articleId: id } });
+		const deleteImages = this.prismaService.articleBlockImage.deleteMany({ where: { articleId: id } });
+		const deleteTypes = this.prismaService.articleType.deleteMany({ where: { articleId: id } });
+		const deleteComments = this.prismaService.comment.deleteMany({
+			where: { articleId: id },
+		});
+		const deleteArticle = this.prismaService.article.delete({ where: { id }, include: this.articlesInclude });
+
 		try {
-			return await this.prismaService.article.delete({ where: { id }, include: this.articlesInclude });
+			await this.prismaService.$transaction([
+				deleteCode,
+				deleteText,
+				deleteImages,
+				deleteTypes,
+				deleteComments,
+				deleteArticle,
+			]);
+
+			return 'succes';
 		} catch (error) {
-			throw new NotFoundException();
+			throw new Error(error);
 		}
 	}
 
-	async createOne(article: TArticleDtoCreate) {
+	async createOne(article: TArticleDtoCreate, userId: number | undefined) {
 		const { codeBlocks, imageBlocks, textBlocks, types, ...mainInfo } = article;
 
 		try {
@@ -140,7 +166,7 @@ export class ArticlesService {
 					imageBlocks: {
 						create: imageBlocks,
 					},
-					stats: {
+					ArticleStats: {
 						create: { dislikes: 0, likes: 0 },
 					},
 					textBlocks: {
@@ -150,6 +176,11 @@ export class ArticlesService {
 								create: el.paragraphs,
 							},
 						})),
+					},
+					User: {
+						connect: {
+							id: userId,
+						},
 					},
 				},
 				include: this.articlesInclude,

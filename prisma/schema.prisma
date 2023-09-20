@@ -18,12 +18,15 @@ model User {
   role     String
   password String
   profile  Profile?
+
+  Comment Comment[]
+  Article Article[]
 }
 
 model Profile {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+  id     Int   @id @default(autoincrement())
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?  @unique
 
   name     String?
   surname  String?
@@ -34,15 +37,21 @@ model Profile {
   country  String?
 }
 
-// ARTICLE
+// Comment
 
-model ArticleType {
-  id   Int    @id @default(autoincrement())
-  name String
+model Comment {
+  id Int @id @default(autoincrement())
 
-  articleId Int?
-  Article   Article? @relation(fields: [articleId], references: [id])
+  text String
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int
 }
+
+// ARTICLE
 
 model Article {
   id       Int    @id @default(autoincrement())
@@ -53,21 +62,32 @@ model Article {
 
   createdAt DateTime @default(now())
 
-  types ArticleType[]
-
+  types       ArticleType[]
   textBlocks  ArticleBlockText[]
   codeBlocks  ArticleBlockCode[]
   imageBlocks ArticleBlockImage[]
-  stats       ArticleStats?
+  Comment     Comment[]
+
+  User         User?         @relation(fields: [userId], references: [id])
+  userId       Int?
+  ArticleStats ArticleStats?
 }
 
 model ArticleStats {
-  id       Int    @id @default(autoincrement())
+  id       Int @id @default(autoincrement())
   likes    Int
   dislikes Int
 
-  article   Article @relation(fields: [articleId], references: [id])
-  articleId Int     @unique
+  article   Article? @relation(fields: [articleId], references: [id])
+  articleId Int?     @unique
+}
+
+model ArticleType {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  articleId Int?
+  Article   Article? @relation(fields: [articleId], references: [id])
 }
 
 model ArticleBlockCode {
