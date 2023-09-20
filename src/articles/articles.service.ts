@@ -13,12 +13,33 @@ export class ArticlesService {
 		types: true,
 		codeBlocks: true,
 		imageBlocks: true,
+		stats: true,
 		textBlocks: {
 			include: {
 				paragraphs: true,
 			},
 		},
 	};
+
+	async like(id: number) {
+		const founded = await this.getOne(id);
+
+		if (founded) {
+			const updated = await this.update({ id, dto: { likes: (founded.stats?.likes ?? 0) + 1 } });
+
+			return updated;
+		}
+	}
+
+	async dislike(id: number) {
+		const founded = await this.getOne(id);
+
+		if (founded) {
+			const updated = await this.update({ id, dto: { dislikes: (founded.stats?.dislikes ?? 0) + 1 } });
+
+			return updated;
+		}
+	}
 
 	getAll(query: TArticleQuery) {
 		const args: Prisma.ArticleFindManyArgs = {
@@ -35,12 +56,12 @@ export class ArticlesService {
 		return this.prismaService.article.findMany({ ...args, include: this.articlesInclude });
 	}
 
-	getOne(id: number) {
-		return this.prismaService.article.findFirst({ where: { id }, include: this.articlesInclude });
+	async getOne(id: number) {
+		return await this.prismaService.article.findFirst({ where: { id }, include: this.articlesInclude });
 	}
 
 	async update(params: { id: number; dto: TArticleDtoUpdate }) {
-		const { types, codeBlocks, imageBlocks, textBlocks, ...data } = params.dto;
+		const { types, codeBlocks, imageBlocks, likes, dislikes, textBlocks, ...data } = params.dto;
 		try {
 			return await this.prismaService.article.update({
 				where: { id: params.id },
@@ -48,6 +69,17 @@ export class ArticlesService {
 
 				data: {
 					...data,
+
+					stats: {
+						update: {
+							...(likes && {
+								likes: likes,
+							}),
+							...(dislikes && {
+								dislikes: dislikes,
+							}),
+						},
+					},
 
 					types: {
 						...(types && {
@@ -91,31 +123,39 @@ export class ArticlesService {
 		}
 	}
 
-	createOne(article: TArticleDtoCreate) {
+	async createOne(article: TArticleDtoCreate) {
 		const { codeBlocks, imageBlocks, textBlocks, types, ...mainInfo } = article;
-		return this.prismaService.article.create({
-			data: {
-				...mainInfo,
-				views: 0,
-				types: {
-					create: types,
+
+		try {
+			return await this.prismaService.article.create({
+				data: {
+					...mainInfo,
+					views: 0,
+					types: {
+						create: types,
+					},
+					codeBlocks: {
+						create: codeBlocks,
+					},
+					imageBlocks: {
+						create: imageBlocks,
+					},
+					stats: {
+						create: { dislikes: 0, likes: 0 },
+					},
+					textBlocks: {
+						create: textBlocks?.map((el) => ({
+							...el,
+							paragraphs: {
+								create: el.paragraphs,
+							},
+						})),
+					},
 				},
-				codeBlocks: {
-					create: codeBlocks,
-				},
-				imageBlocks: {
-					create: imageBlocks,
-				},
-				textBlocks: {
-					create: textBlocks?.map((el) => ({
-						...el,
-						paragraphs: {
-							create: el.paragraphs,
-						},
-					})),
-				},
-			},
-			include: this.articlesInclude,
-		});
+				include: this.articlesInclude,
+			});
+		} catch (error) {
+			throw new Error(error);
+		}
 	}
 }

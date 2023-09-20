@@ -47,6 +47,9 @@ export const articleDtoUpdate = articleDto
 	.partial()
 	.extend({
 		types: z.array(articleTypesDto.extend({ id: z.number() })).optional(),
+		views: z.number().optional(),
+		likes: z.number().optional(),
+		dislikes: z.number().optional(),
 
 		textBlocks: z.array(articleTextBlock.extend({ id: z.number() })).optional(),
 		codeBlocks: z.array(articleCodeBlock.extend({ id: z.number() })).optional(),

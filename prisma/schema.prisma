@@ -58,6 +58,16 @@ model Article {
   textBlocks  ArticleBlockText[]
   codeBlocks  ArticleBlockCode[]
   imageBlocks ArticleBlockImage[]
+  stats       ArticleStats?
+}
+
+model ArticleStats {
+  id       Int    @id @default(autoincrement())
+  likes    Int
+  dislikes Int
+
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int     @unique
 }
 
 model ArticleBlockCode {

@@ -27,7 +27,19 @@ export class ArticlesController {
 			throw new NotFoundException();
 		}
 
+		await this.articlesService.update({ id, dto: { views: founded.views + 1 } });
+
 		return founded;
+	}
+
+	@Patch(':id/like')
+	async like(@Param('id', ParseIntPipe) id: number) {
+		return this.articlesService.like(id);
+	}
+
+	@Patch(':id/dislike')
+	async dislike(@Param('id', ParseIntPipe) id: number) {
+		return this.articlesService.dislike(id);
 	}
 
 	@Post()
