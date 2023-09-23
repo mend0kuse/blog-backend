@@ -60,3 +60,5 @@ export const articleDtoUpdate = articleDto
 export type TArticleDto = z.infer<typeof articleDto>;
 export type TArticleDtoCreate = z.infer<typeof articleDtoCreate>;
 export type TArticleDtoUpdate = z.infer<typeof articleDtoUpdate>;
+
+export type TArticleWithUser = TArticleDtoUpdate & { userId: number };

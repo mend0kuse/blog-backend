@@ -1,3 +1,4 @@
+import { isAuthor } from './helpers/is-author';
 import { Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { Body, Delete, Param, Patch, Post, Query, Request, UseGuards, UsePipes } from '@nestjs/common/decorators';
 import { NotFoundException } from '@nestjs/common/exceptions';
@@ -5,7 +6,13 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { RequestWithUser } from 'src/user/schemas/user.dto';
 import { ZodValidationPipe } from 'src/validation/zod-validation.pipe';
 import { ArticlesService } from './articles.service';
-import { articleDtoCreate, articleDtoUpdate, TArticleDtoCreate, TArticleDtoUpdate } from './schemas/article';
+import {
+	articleDtoCreate,
+	articleDtoUpdate,
+	TArticleDtoCreate,
+	TArticleDtoUpdate,
+	TArticleWithUser,
+} from './schemas/article';
 import { articleQuery, TArticleQuery } from './schemas/articleQuery';
 
 @Controller('articles')
@@ -50,7 +57,15 @@ export class ArticlesController {
 
 	@Delete(':id')
 	@UseGuards(AuthGuard)
-	delete(@Param('id', ParseIntPipe) id: number) {
+	async delete(@Param('id', ParseIntPipe) id: number, @Request() req: RequestWithUser) {
+		const deletedArticle = await this.articlesService.getOne(id);
+
+		if (!deletedArticle) {
+			throw new NotFoundException();
+		}
+
+		isAuthor(req.user, deletedArticle as TArticleWithUser);
+
 		return this.articlesService.deleteOne(id);
 	}
 

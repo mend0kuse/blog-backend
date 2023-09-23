@@ -9,18 +9,20 @@ import { TArticleQuery } from './schemas/articleQuery';
 export class ArticlesService {
 	constructor(private prismaService: PrismaService) {}
 
+	private selectUser = {
+		id: true,
+		role: true,
+		email: true,
+		profile: true,
+	};
+
 	private articlesInclude = {
 		types: true,
 		codeBlocks: true,
 		imageBlocks: true,
 		ArticleStats: true,
 		User: {
-			select: {
-				id: true,
-				role: true,
-				email: true,
-				profile: true,
-			},
+			select: this.selectUser,
 		},
 		textBlocks: {
 			include: {
@@ -134,7 +136,7 @@ export class ArticlesService {
 		const deleteArticle = this.prismaService.article.delete({ where: { id }, include: this.articlesInclude });
 
 		try {
-			await this.prismaService.$transaction([
+			return await this.prismaService.$transaction([
 				deleteCode,
 				deleteText,
 				deleteImages,
@@ -142,8 +144,6 @@ export class ArticlesService {
 				deleteComments,
 				deleteArticle,
 			]);
-
-			return 'succes';
 		} catch (error) {
 			throw new Error(error);
 		}
