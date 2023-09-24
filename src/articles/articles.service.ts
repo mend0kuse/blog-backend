@@ -9,28 +9,6 @@ import { TArticleQuery } from './schemas/articleQuery';
 export class ArticlesService {
 	constructor(private prismaService: PrismaService) {}
 
-	private selectUser = {
-		id: true,
-		role: true,
-		email: true,
-		profile: true,
-	};
-
-	private articlesInclude = {
-		types: true,
-		codeBlocks: true,
-		imageBlocks: true,
-		ArticleStats: true,
-		User: {
-			select: this.selectUser,
-		},
-		textBlocks: {
-			include: {
-				paragraphs: true,
-			},
-		},
-	};
-
 	async like(id: number) {
 		const founded = await this.getOne(id);
 
@@ -53,12 +31,13 @@ export class ArticlesService {
 
 	getAll(query: TArticleQuery) {
 		const args: Prisma.ArticleFindManyArgs = {
-			...(query.sort && { orderBy: { [query.sort]: query.order ?? 'asc' } }),
-			...(query.category && {
-				where: {
+			where: {
+				...(query.q && { ...this.search(query.q) }),
+				...(query.category && {
 					types: { some: { name: query.category } },
-				},
-			}),
+				}),
+			},
+			...(query.sort && { orderBy: { [query.sort]: query.order ?? 'asc' } }),
 			...(query.limit && { take: query.limit }),
 			...(query.limit && query.page && { take: query.limit, skip: (query.page - 1) * query.limit }),
 		};
@@ -189,4 +168,81 @@ export class ArticlesService {
 			throw new Error(error);
 		}
 	}
+
+	private search = (q: string) => ({
+		OR: [
+			{
+				title: {
+					contains: q,
+				},
+			},
+			{
+				suptitle: {
+					contains: q,
+				},
+			},
+			{
+				codeBlocks: {
+					some: {
+						code: {
+							contains: q,
+						},
+					},
+				},
+			},
+			{
+				imageBlocks: {
+					some: {
+						title: {
+							contains: q,
+						},
+					},
+				},
+			},
+			{
+				textBlocks: {
+					some: {
+						OR: [
+							{
+								title: {
+									contains: q,
+								},
+							},
+							{
+								paragraphs: {
+									some: {
+										text: {
+											contains: q,
+										},
+									},
+								},
+							},
+						],
+					},
+				},
+			},
+		],
+	});
+
+	private selectUser = {
+		id: true,
+		role: true,
+		email: true,
+		profile: true,
+	};
+
+	private articlesInclude = {
+		types: true,
+		codeBlocks: true,
+		imageBlocks: true,
+		ArticleStats: true,
+		User: {
+			select: this.selectUser,
+		},
+		textBlocks: {
+			include: {
+				paragraphs: true,
+			},
+		},
+	};
 }

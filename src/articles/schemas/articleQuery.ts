@@ -9,6 +9,7 @@ export const articleQuery = z
 		category: z.nativeEnum(ArticleTypes),
 		limit: stringToNumber,
 		page: stringToNumber,
+		q: z.string(),
 	})
 	.partial();
 
