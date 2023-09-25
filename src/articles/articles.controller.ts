@@ -14,10 +14,15 @@ import {
 	TArticleWithUser,
 } from './schemas/article';
 import { articleQuery, TArticleQuery } from './schemas/articleQuery';
+import { NotificationService } from 'src/notification/notification.service';
+import { PartialAuth } from 'src/auth/roles/roles';
 
 @Controller('articles')
 export class ArticlesController {
-	constructor(private readonly articlesService: ArticlesService) {}
+	constructor(
+		private readonly articlesService: ArticlesService,
+		private readonly notificationsService: NotificationService,
+	) {}
 
 	@Get()
 	@UsePipes(new ZodValidationPipe(articleQuery))
@@ -39,13 +44,34 @@ export class ArticlesController {
 	}
 
 	@Patch(':id/like')
-	async like(@Param('id', ParseIntPipe) id: number) {
-		return this.articlesService.like(id);
+	@UseGuards(AuthGuard)
+	@PartialAuth()
+	async like(@Param('id', ParseIntPipe) id: number, @Request() req: RequestWithUser) {
+		const liked = await this.articlesService.like(id);
+
+		if (!liked) {
+			throw new NotFoundException();
+		}
+
+		await this.notificationsService.createOne({ articleId: id, type: 'like', userId: req.user?.id });
+
+		return liked;
 	}
 
 	@Patch(':id/dislike')
-	async dislike(@Param('id', ParseIntPipe) id: number) {
-		return this.articlesService.dislike(id);
+	@UseGuards(AuthGuard)
+	@PartialAuth()
+	@UseGuards(AuthGuard)
+	async dislike(@Param('id', ParseIntPipe) id: number, @Request() req: RequestWithUser) {
+		const disliked = await this.articlesService.dislike(id);
+
+		if (!disliked) {
+			throw new NotFoundException();
+		}
+
+		await this.notificationsService.createOne({ articleId: id, type: 'dislike', userId: req.user?.id });
+
+		return disliked;
 	}
 
 	@Post()

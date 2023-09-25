@@ -6,10 +6,14 @@ import { RequestWithUser } from 'src/user/schemas/user.dto';
 import { ZodValidationPipe } from 'src/validation/zod-validation.pipe';
 import { CommentsService } from './comments.service';
 import { commentSchema, TCommentDto } from './schemas/comment';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Controller('comments')
 export class CommentsController {
-	constructor(private commentsService: CommentsService) {}
+	constructor(
+		private commentsService: CommentsService,
+		private notificationService: NotificationService,
+	) {}
 
 	@Post('article/:articleId')
 	@UseGuards(AuthGuard)
@@ -18,7 +22,11 @@ export class CommentsController {
 		@Body(new ZodValidationPipe(commentSchema)) dto: TCommentDto,
 		@Request() req: RequestWithUser,
 	) {
-		return await this.commentsService.createOne({ articleId, userId: req.user?.id, comment: dto });
+		const created = await this.commentsService.createOne({ articleId, userId: req.user?.id, comment: dto });
+
+		await this.notificationService.createOne({ type: 'comment', articleId, userId: req.user?.id });
+
+		return created;
 	}
 
 	@Get('article/:articleId')

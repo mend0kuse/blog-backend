@@ -106,6 +106,7 @@ export class ArticlesService {
 
 	async deleteOne(id: number) {
 		const deleteCode = this.prismaService.articleBlockCode.deleteMany({ where: { articleId: id } });
+		const deleteStats = this.prismaService.articleStats.deleteMany({ where: { articleId: id } });
 		const deleteText = this.prismaService.articleBlockText.deleteMany({ where: { articleId: id } });
 		const deleteImages = this.prismaService.articleBlockImage.deleteMany({ where: { articleId: id } });
 		const deleteTypes = this.prismaService.articleType.deleteMany({ where: { articleId: id } });
@@ -117,6 +118,7 @@ export class ArticlesService {
 		try {
 			return await this.prismaService.$transaction([
 				deleteCode,
+				deleteStats,
 				deleteText,
 				deleteImages,
 				deleteTypes,

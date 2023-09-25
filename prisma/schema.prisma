@@ -19,8 +19,9 @@ model User {
   password String
   profile  Profile?
 
-  Comment Comment[]
-  Article Article[]
+  Comment       Comment[]
+  Article       Article[]
+  notifications Notification[]
 }
 
 model Profile {
@@ -51,6 +52,19 @@ model Comment {
   articleId Int
 }
 
+model Notification {
+  id   Int    @id @default(autoincrement())
+  type String
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int
+
+  createdAt DateTime @default(now())
+}
+
 // ARTICLE
 
 model Article {
@@ -71,6 +85,8 @@ model Article {
   User         User?         @relation(fields: [userId], references: [id])
   userId       Int?
   ArticleStats ArticleStats?
+
+  Notification Notification[]
 }
 
 model ArticleStats {

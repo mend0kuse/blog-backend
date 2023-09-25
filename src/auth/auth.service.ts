@@ -14,7 +14,7 @@ export class AuthService {
 	) {}
 
 	async signIn(dto: SignInDto) {
-		const user = await this.usersService.getOne(dto.email);
+		const user = await this.usersService.getOne({ email: dto.email });
 
 		if (!user) {
 			throw new UnauthorizedException('Invalid email');

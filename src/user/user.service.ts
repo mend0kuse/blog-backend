@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { excludeFields } from 'src/shared/lib/excludeFields';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProfileDto } from './schemas/profile.dto';
 
@@ -7,14 +8,20 @@ import { ProfileDto } from './schemas/profile.dto';
 export class UserService {
 	constructor(private prisma: PrismaService) {}
 
-	async getOne(email: string) {
-		return this.prisma.user.findUnique({
-			where: { email },
+	private include = {
+		notifications: true,
+		profile: true,
+	};
+
+	async getOne({ id, email }: { id?: number; email?: string }) {
+		return await this.prisma.user.findFirst({
+			where: { OR: [{ id: { equals: id } }, { email: { equals: email } }] },
+			include: this.include,
 		});
 	}
 
 	async createUser(data: Prisma.UserCreateInput) {
-		const finded = await this.getOne(data.email);
+		const finded = await this.getOne({ email: data.email });
 
 		if (finded) {
 			throw new BadRequestException(
@@ -22,31 +29,29 @@ export class UserService {
 			);
 		}
 
-		const { password: _, ...created } = await this.prisma.user.create({
+		const created = await this.prisma.user.create({
 			data: {
 				...data,
 				profile: { create: {} },
 			},
 		});
 
-		return created;
+		return excludeFields(created, ['password']);
 	}
 
 	async updateProfile(params: { email?: string; profile: ProfileDto }) {
 		const { email, profile } = params;
 
-		const { password: _, ...updated } = await this.prisma.user.update({
+		const updated = await this.prisma.user.update({
 			where: { email },
 			data: {
 				profile: {
 					update: profile,
 				},
 			},
-			include: {
-				profile: true,
-			},
+			include: this.include,
 		});
 
-		return updated;
+		return excludeFields(updated, ['password']);
 	}
 }
