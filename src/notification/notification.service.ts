@@ -7,8 +7,25 @@ export class NotificationService {
 	constructor(private prismaService: PrismaService) {}
 
 	private include = {
+		article: {
+			select: {
+				title: true,
+				id: true,
+			},
+		},
 		user: true,
 	};
+
+	getMany(ids: number[]) {
+		return this.prismaService.notification.findMany({
+			where: {
+				articleId: {
+					in: ids,
+				},
+			},
+			include: this.include,
+		});
+	}
 
 	createOne(data: TCreateNotification) {
 		return this.prismaService.notification.create({

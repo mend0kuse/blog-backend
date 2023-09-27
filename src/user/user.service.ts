@@ -3,21 +3,40 @@ import { Prisma } from '@prisma/client';
 import { excludeFields } from 'src/shared/lib/excludeFields';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProfileDto } from './schemas/profile.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {
-	constructor(private prisma: PrismaService) {}
+	constructor(
+		private prisma: PrismaService,
+		private notificationsService: NotificationService,
+	) {}
 
 	private include = {
-		notifications: true,
 		profile: true,
+		Article: {
+			select: {
+				id: true,
+			},
+		},
 	};
 
 	async getOne({ id, email }: { id?: number; email?: string }) {
-		return await this.prisma.user.findFirst({
+		const user = await this.prisma.user.findFirst({
 			where: { OR: [{ id: { equals: id } }, { email: { equals: email } }] },
 			include: this.include,
 		});
+
+		if (!user) {
+			return null;
+		}
+
+		const notifications = await this.notificationsService.getMany(user.Article.map((item) => item.id));
+
+		// @ts-ignore
+		user.notifications = notifications;
+
+		return user;
 	}
 
 	async createUser(data: Prisma.UserCreateInput) {

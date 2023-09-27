@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { excludeFields } from 'src/shared/lib/excludeFields';
 import { UserService } from 'src/user/user.service';
 import { saltOrRounds } from './constans';
 import { SignInDto } from './schemas/sign-in.dto';
@@ -27,7 +28,7 @@ export class AuthService {
 		}
 
 		return {
-			access_token: await this.jwtService.signAsync(user),
+			access_token: await this.jwtService.signAsync(excludeFields(user, ['password'])),
 		};
 	}
 
