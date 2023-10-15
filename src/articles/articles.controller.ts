@@ -15,7 +15,6 @@ import {
 } from './schemas/article';
 import { articleQuery, TArticleQuery } from './schemas/articleQuery';
 import { NotificationService } from 'src/notification/notification.service';
-import { PartialAuth } from 'src/auth/roles/roles';
 
 @Controller('articles')
 export class ArticlesController {
@@ -45,7 +44,6 @@ export class ArticlesController {
 
 	@Patch(':id/like')
 	@UseGuards(AuthGuard)
-	@PartialAuth()
 	async like(@Param('id', ParseIntPipe) id: number, @Request() req: RequestWithUser) {
 		const liked = await this.articlesService.like(id);
 
@@ -59,8 +57,6 @@ export class ArticlesController {
 	}
 
 	@Patch(':id/dislike')
-	@UseGuards(AuthGuard)
-	@PartialAuth()
 	@UseGuards(AuthGuard)
 	async dislike(@Param('id', ParseIntPipe) id: number, @Request() req: RequestWithUser) {
 		const disliked = await this.articlesService.dislike(id);

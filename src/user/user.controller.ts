@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common/exceptions';
-import { Body, Controller, Patch, Req, UseGuards, UsePipes, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Patch, Req, UseGuards, UsePipes, Get, Param, ParseIntPipe, Delete } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { excludeFields } from 'src/shared/lib/excludeFields';
 import { ZodValidationPipe } from 'src/validation/zod-validation.pipe';
@@ -18,6 +18,12 @@ export class UserController {
 		return this.userService.updateProfile({ email: request.user?.email, profile: dto });
 	}
 
+	@Get('/notif')
+	@UseGuards(AuthGuard)
+	async getNotif(@Req() request: RequestWithUser) {
+		return this.userService.getNotifications(request.user?.id);
+	}
+
 	@Get(':id')
 	async getOne(@Param('id', ParseIntPipe) id: number) {
 		const finded = await this.userService.getOne({ id });
@@ -27,5 +33,11 @@ export class UserController {
 		}
 
 		return excludeFields(finded, ['password']);
+	}
+
+	@Delete('/notif')
+	@UseGuards(AuthGuard)
+	async readNotifications(@Req() request: RequestWithUser, @Body('ids') ids: number[]) {
+		return this.userService.readNotifications({ userId: request.user?.id, ids });
 	}
 }

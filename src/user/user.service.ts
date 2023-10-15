@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { excludeFields } from 'src/shared/lib/excludeFields';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -17,6 +17,14 @@ export class UserService {
 		Article: {
 			select: {
 				id: true,
+				title: true,
+				preview: true,
+				views: true,
+			},
+		},
+		Comment: {
+			include: {
+				user: true,
 			},
 		},
 	};
@@ -30,11 +38,6 @@ export class UserService {
 		if (!user) {
 			return null;
 		}
-
-		const notifications = await this.notificationsService.getMany(user.Article.map((item) => item.id));
-
-		// @ts-ignore
-		user.notifications = notifications;
 
 		return user;
 	}
@@ -58,6 +61,18 @@ export class UserService {
 		return excludeFields(created, ['password']);
 	}
 
+	async readNotifications({ userId, ids }: { userId: number | undefined; ids: number[] }) {
+		await this.notificationsService.delete(ids);
+
+		const finded = await this.getOne({ id: userId });
+
+		if (!finded) {
+			throw new NotFoundException();
+		}
+
+		return excludeFields(finded, ['password']);
+	}
+
 	async updateProfile(params: { email?: string; profile: ProfileDto }) {
 		const { email, profile } = params;
 
@@ -72,5 +87,18 @@ export class UserService {
 		});
 
 		return excludeFields(updated, ['password']);
+	}
+
+	async getNotifications(id: number | undefined) {
+		const user = await this.prisma.user.findFirst({
+			where: { OR: [{ id: { equals: id } }] },
+			include: this.include,
+		});
+
+		if (!user) {
+			throw new NotFoundException();
+		}
+
+		return this.notificationsService.getMany(user.Article.map((item) => item.id));
 	}
 }

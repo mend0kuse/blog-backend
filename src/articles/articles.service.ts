@@ -29,7 +29,7 @@ export class ArticlesService {
 		}
 	}
 
-	getAll(query: TArticleQuery) {
+	async getAll(query: TArticleQuery) {
 		const args: Prisma.ArticleFindManyArgs = {
 			where: {
 				...(query.q && { ...this.search(query.q) }),
@@ -42,7 +42,10 @@ export class ArticlesService {
 			...(query.limit && query.page && { take: query.limit, skip: (query.page - 1) * query.limit }),
 		};
 
-		return this.prismaService.article.findMany({ ...args, include: this.articlesInclude });
+		const articles = await this.prismaService.article.findMany({ ...args, include: this.articlesInclude });
+		const types = articles.map((item) => item.types.map((type) => type.name)).flat();
+
+		return { articles, types: Array.from(new Set(types)) };
 	}
 
 	async getOne(id: number) {
