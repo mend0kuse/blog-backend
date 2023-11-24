@@ -33,15 +33,13 @@ export const articleTypesDto = z.object({
 	name: z.nativeEnum(ArticleTypes),
 });
 
-export const articleDtoCreate = articleDto
-	.extend({
-		types: z.array(articleTypesDto),
+export const articleDtoCreate = articleDto.extend({
+	types: z.array(articleTypesDto),
 
-		textBlocks: z.array(articleTextBlock).optional(),
-		codeBlocks: z.array(articleCodeBlock).optional(),
-		imageBlocks: z.array(articleImageBlock).optional(),
-	})
-	.strict();
+	textBlocks: z.array(articleTextBlock).optional(),
+	codeBlocks: z.array(articleCodeBlock).optional(),
+	imageBlocks: z.array(articleImageBlock).optional(),
+});
 
 export const articleDtoUpdate = articleDto
 	.partial()
